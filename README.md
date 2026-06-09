@@ -18,6 +18,19 @@ Este repositorio contiene la configuración, infraestructura y scripts de automa
 
 ---
 
+### 💻 Hardware del Servidor (Componentes de la PC)
+
+| Componente | Detalle Técnico |
+| :--- | :--- |
+| **Procesador (CPU)** | ![Intel](https://img.shields.io/badge/Intel-0071C5?style=flat-square) I5-3470 |
+| **Memoria RAM** | **x2** 8 GB 1333 MHz (Dual Channel) |
+| **Placa Madre (Mother)** | **GIGABYTE GA-Q77M-D2H** (Chipset Intel Q77 con soporte vPro) |
+| **Almacenamiento (SO)** | ![SSD](https://img.shields.io/badge/120_GB_SSD-0051BA?style=flat-square) Western Digital Green (Sistema Operativo) |
+| **Almacenamiento (Data)** | ![HDD](https://img.shields.io/badge/1_TB_Seagate_Enterprise-737373?style=flat-square) Disco Rigido Exclusivo para Nextcloud |
+| **Conectividad (Red)** | ![Ethernet](https://img.shields.io/badge/1_Gbps_Ethernet-0078D4?style=flat-square) Integrada en placa (Conexión por cable LAN) |
+
+---
+
 ## 🚀 Características del Proyecto
 
 * **Almacenamiento Autohospedado (Self-Hosted):** Despliegue de Nextcloud mediante Docker-Compose utilizando un volumen de almacenamiento montado en un disco externo de 1TB.
