@@ -1,6 +1,6 @@
 # ☁️ Home Server: Nube Privada & Automatización con Nextcloud y Docker
 
-Este repositorio contiene la configuración, infraestructura y scripts de automatización utilizados para desplegar un servidor doméstico basado en **Ubuntu Server**, centralizando el almacenamiento privado y herramientas de descarga automatizada.
+Este repositorio contiene la configuración, infraestructura y scripts de automatización utilizados para desplegar un servidor doméstico basado en **Ubuntu Server**, centralizando el almacenamiento de archivos y fotos privado y automatizacion de descarga de contenido.
 
 ---
 # 📃 Objetivos:
@@ -24,6 +24,7 @@ Este repositorio contiene la configuración, infraestructura y scripts de automa
 * **Redes Privadas Seguras (Mesh VPN):** Integración con **Tailscale** para acceder a la nube de forma remota y segura desde cualquier dispositivo fuera de la red local, prescindiendo de la apertura de puertos complejos en el router hogareño.
 * **Monitoreo Automático en Tiempo Real:** Script en Bash integrado con el motor del kernel `inotify-tools` que vigila el directorio de archivos y envía notificaciones instantáneas a Telegram (vía CallMeBot) cuando se procesan nuevas subidas o eliminaciones.
 * **Filtrado de Spam Quirúrgico:** Lógica implementada en el monitor de archivos para omitir de forma inteligente las escrituras de archivos temporales (`.tmp`, `.part`, `.json`) generadas por contenedores de descargas automatizadas (como MeTube).
+* **Conexion Remota via SSH:** Al utilizar linux disponemos de la gran ventaja de conectarnos por la misma consola por *SSH* y poder trabajar mas comodamente desde nuestra casa
 
 ---
 
@@ -38,5 +39,51 @@ Este repositorio contiene la configuración, infraestructura y scripts de automa
 
 ### 1. Dependencias del Servidor
 Para que los scripts de monitoreo funcionen, el servidor requiere:
+
 ```bash
 sudo apt update && sudo apt install inotify-tools curl -y
+```
+
+### **2. Configuración del Servicio de Monitoreo**
+
+El script se configuró como un servicio nativo del sistema mediante systemd para asegurar su ejecución constante en segundo plano y su persistencia tras reinicios del servidor.
+* Crear el archivo del servicio:  
+   ```bash  
+   sudo nano /etc/systemd/system/nextcloud-watch.service
+    ```
+
+* Añadir la siguiente estructura:  
+   ```TOML  
+   \[Unit\]  
+   Description\=Nextcloud File Watcher Service  
+   After\=network.target
+   
+   \[Service\]  
+   Type\=simple  
+   ExecStart\=/bin/bash /mnt/nextcloud\_1tb/scripts/watch\_nextcloud.sh  
+   Restart\=always  
+   RestartSec\=5
+
+   \[Install\]  
+   WantedBy\=multi-user.target
+    ```
+
+* Habilitar y arrancar el servicio para que corra desde el inicio:  
+   ```bash  
+   sudo systemctl daemon-reload  
+   sudo systemctl enable nextcloud-watch.service  
+   sudo systemctl start nextcloud-watch.service
+    ```
+
+## **🛠️ Guía de Uso del Monitor Automático**
+
+Para el ejemplo usaremos **Metube**, un contenedor que aprovecha un video de youtube y lo convierte a un video/audio descargable. Este ejemplo puede ser usado con cualquier tipo de conversor que se requiera: El script procesa los eventos del kernel generados en las carpetas de Nextcloud. Gracias a la inclusión del filtro robusto anti-spam para **MeTube**, el comportamiento de las alertas funciona de la siguiente manera:
+
+* **Durante la descarga:** MeTube crea múltiples archivos temporales .tmp y metadatos .json en el disco. El script los detecta e intercepta, descartándolos al instante para evitar saturar el canal de Telegram.  
+* **Al finalizar la descarga:** En cuanto el archivo se consolida con su nombre y extensión definitiva (ej: .mp4 o .mp3), el sistema dispara una única notificación limpia con el estado del almacenamiento del disco de 1TB.
+
+## **🛡️ Seguridad y Buenas Prácticas**
+
+* **Cero Puertos Abiertos:** Al utilizar **Tailscale**, el servidor no expone los puertos 80 o 443 al internet público tradicional, lo que mitiga ataques de escaneo de puertos (port-scanning) y vulnerabilidades web directas.  
+* **Separación de Credenciales:** Las claves de API críticas, tokens de servicios de mensajería y nombres de usuario específicos se manejan localmente mediante variables declaradas dentro del servidor, evitando su filtración en repositorios públicos.  
+* **Persistencia Segura:** El uso de volúmenes de Docker hacia el disco de 1TB garantiza que, ante cualquier caída, actualización de contenedores o fallo del sistema operativo base, los datos personales permanezcan intactos y aislados.
