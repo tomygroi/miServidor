@@ -100,3 +100,27 @@ Para el ejemplo usaremos **Metube**, un contenedor que aprovecha un video de you
 * **Cero Puertos Abiertos:** Al utilizar **Tailscale**, el servidor no expone los puertos 80 o 443 al internet público tradicional, lo que mitiga ataques de escaneo de puertos (port-scanning) y vulnerabilidades web directas.  
 * **Separación de Credenciales:** Las claves de API críticas, tokens de servicios de mensajería y nombres de usuario específicos se manejan localmente mediante variables declaradas dentro del servidor, evitando su filtración en repositorios públicos.  
 * **Persistencia Segura:** El uso de volúmenes de Docker hacia el disco de 1TB garantiza que, ante cualquier caída, actualización de contenedores o fallo del sistema operativo base, los datos personales permanezcan intactos y aislados.
+
+---
+
+## 📥 Arquitectura de Integración: Nextcloud + MeTube
+
+La clave para que las descargas aparezcan automáticamente en la nube sin mover archivos a mano es el **mapeo de volúmenes cruzados** en Docker. 
+
+MeTube está configurado para descargar el contenido directamente dentro de la ruta física que Nextcloud utiliza para indexar los archivos del usuario en el disco de 1TB:
+
+```text
+📁 /mnt/nextcloud_1tb/data/
+└── 📁 TU_USUARIO_NEXTCLOUD/
+    └── 📁 files/
+        └── 📁 Downloads/  <-- [Punto de Montaje en MeTube como /downloads]
+```
+
+### Al compartir este directorio, en cuanto añadís un enlace en la interfaz de MeTube:
+
+1. El contenedor procesa y escribe el archivo final directamente en el almacenamiento de Nextcloud.  
+2. El servicio ``nextcloud-watch.service`` (que vigila esa misma ruta) se activa y te avisa al celular.  
+3. Para que Nextcloud reconozca el archivo inmediatamente en su interfaz web sin esperar al cron del sistema, se puede ejecutar un escaneo manual de archivos mediante la herramienta *occ* integrada:  
+   ```bash
+   docker exec \--user www-data nextcloud-app php occ files:scan \--all
+   ```
